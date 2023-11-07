@@ -1,3 +1,4 @@
+import dotenv
 import os
 from dotenv import load_dotenv
 import mysql.connector
