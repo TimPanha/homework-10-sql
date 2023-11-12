@@ -1,52 +1,97 @@
-'''
-Insert new employee record, emp_num = 999, emp_lname = Doe, emp_fname = John, emp_initial = D, emp_hiredate = current date
-'''
-emp_num = 999
-emp_lname = 'Doe'
-emp_fname = 'John'
-emp_initial = 'D'
-emp_hiredate = datetime.now().strftime('%Y-%m-%d')  # current date
+1. add new employee record to employee table with id = 168, firstname = 'John', lastname = 'Doe', initials = 'JD', job = 'Programmer', hire_date = today's date.
 
-cursor.execute("""
-    INSERT INTO employee (emp_num, emp_lname, emp_fname, emp_initial, emp_hiredate)
-    VALUES (%s, %s, %s, %s, %s)
-""", (emp_num, emp_lname, emp_fname, emp_initial, emp_hiredate))
+today = datetime.now()
 
+sql = "INSERT INTO EMPLOYEE (emp_num, emp_lname, emp_fname, emp_initial, emp_hiredate, job_code) VALUES(%s, %s, %s, %s, %s, %s)"
+value= (168, "Doe", "John", "JD", today, 500)
 
-'''
-Update employee record, job_code = 510 where emp_num = 999
-'''
-emp_num = 999
-job_code = 510
+cursor.execute(sql, value)
 
-cursor.execute("""
-    UPDATE employee 
-    SET job_code = %s
-    WHERE emp_num = %s
-""", (job_code, emp_num))
+DB.commit()
 
-'''
-Delete employee record, emp_num = 999
-'''
-emp_num = 999
-
-cursor.execute("""
-    DELETE FROM employee 
-    WHERE emp_num = %s
-""", (emp_num,))
+print(cursor.rowcount, "Record Inserted.") 
 
 
-'''
-Query assigment where assign_date is larger than 2010-01-01
-'''
-date = '2010-01-01'
+2. query the new created employee (id=168) from employee table, with information of employee id, firstname, lastname, initials, job description (join with job), charge per hour (join with job) and hire_date.
 
-cursor.execute("""
-    SELECT * FROM assignment 
-    WHERE assign_date > %s
-""", (date,))
+sql = """
+    SELECT 
+        e.EMP_NUM, 
+        e.EMP_FNAME, 
+        e.EMP_LNAME, 
+        e.EMP_INITIAL, 
+        j.JOB_DESCRIPTION, 
+        j.JOB_CHG_HOUR, 
+        e.EMP_HIREDATE
+    FROM 
+        EMPLOYEE AS e
+    JOIN 
+        JOB AS j ON e.JOB_CODE = j.JOB_CODE 
+    WHERE 
+        e.EMP_NUM = 168;
+"""
+cursor.execute(sql)
 
-assignments = cursor.fetchall()
+result = cursor.fetchone()
 
-for assignment in assignments:
-    print(assignment)
+print("Employee ID:", result[0],
+      "\nFirst Name:", result[1], 
+      "\nLast Name:", result[2], 
+      "\nInitial:", result[3],
+      "\nJob Description:", result[4],
+      "\nCharge per Hour:", result[5],
+      "\nHire Date:", result[6])
+
+
+3. update the new created employee (id=168) job, from 'Programmer' to 'Database Designer'.
+
+update_sql = """
+    UPDATE EMPLOYEE
+    SET job_code = (SELECT job_code FROM JOB WHERE job_description = 'Database Designer')
+    WHERE emp_num = 168;
+"""
+
+cursor.execute(update_sql)
+
+DB.commit()
+
+print(cursor.rowcount, "Successfully Updated.") 
+
+
+4. query all project that has "Programmer" assigned to, with information of project id, project name and program manager (join with employee).
+
+sql = """
+    SELECT
+        p.PROJ_NUM,
+        p.PROJ_NAME,
+        e.EMP_FNAME,
+        e.EMP_LNAME
+    FROM
+        PROJECT AS p
+    JOIN
+        ASSIGNMENT AS a ON p.PROJ_NUM = a.PROJ_NUM
+    JOIN
+        EMPLOYEE AS e ON a.EMP_NUM = e.EMP_NUM
+    JOIN
+        JOB AS j ON e.JOB_CODE = j.JOB_CODE
+    WHERE
+        j.JOB_DESCRIPTION = 'Programmer';
+"""
+cursor.execute(sql)
+
+result = cursor.fetchall()
+
+print(result)
+
+
+5. delete the new created employee (id=168) from employee table.
+
+delete_sql = """
+    DELETE FROM EMPLOYEE 
+    WHERE EMP_NUM = 168;
+"""
+cursor.execute(delete_sql)
+
+DB.commit()
+
+print(cursor.rowcount, "Successfully Deleted.")
